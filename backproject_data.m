@@ -12,7 +12,7 @@ function img = backproject_data(data)
     
     % determine resolution of the image
     data.dr = c/(2*data.deltaF*1e9*data.K);
-    data.dx = c/(2*data.totalAz*mean(data.minF*1e9));
+    data.dx = c/(2*data.totalAz*(data.Fc));
     
     % display maximum scene size and resolution
     fprintf('Maximum Scene Size: %.2f m range, %.2f m cross-range\n', data.maxWr, data.maxWx);
