@@ -22,7 +22,7 @@ function data = getData()
     data.AntY = sin(deg2rad(AZ))*rc;
     data.AntZ = zeros(size(AZ));
     data.RO = sqrt(data.AntX.^2 + data.AntY.^2);
-    data.phdata = HH;
+    data.phdata = VV;
     data.Nfft = 10*data.K;
     data.AZ = deg2rad(AZ);
 end

@@ -11,8 +11,9 @@ delta_Az = data.lambdac / (2*(data.Np-1)*data.deltaAz)
 
 
 img = backproject_data(data);
+%img_mf = matchfilter_data(data);
 
 figure; imagesc(abs(img));
- 
+%figure; imagesc(abs(img_mf)); 
 
 

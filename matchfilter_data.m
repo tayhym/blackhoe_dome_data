@@ -1,27 +1,23 @@
-function img = backproject_data(data)
+function img = matchedfilter_data(data)
     c = 2.99792458e8;
     data.K = size(data.phdata,1);
     data.Np = size(data.phdata,2);
     data.AntAz = (unwrap(atan2(data.AntY,data.AntX)));
     data.deltaAz = abs(mean(diff(data.AntAz)));
-    
+
     % total azimuth an((c / (data.FK*1e9))gle of the aperture
     data.totalAz = max(data.AntAz) - min(data.AntAz);
     data.maxWr = c/(2*data.deltaF*1e9);
     data.maxWx = c/(2*data.deltaAz*mean(data.FK*1e9));
-    
+
     % determine resolution of the image
     data.dr = c/(2*data.deltaF*1e9*data.K);
     data.dx = c/(2*data.totalAz*(data.Fc));
-    
+
     % display maximum scene size and resolution
     fprintf('Maximum Scene Size: %.2f m range, %.2f m cross-range\n', data.maxWr, data.maxWx);
     fprintf('Resolution: %.3f m range, %.3f m cross-range\n', data.dr, data.dx);
     
-    % calculate the range to every bin in range profile (m)
-    data.r_vec = linspace(-data.Nfft/2,data.Nfft/2-1,data.Nfft)*data.maxWr/data.Nfft;
-    
-    % initialize image with all zero values
     data.im_final = zeros(size(data.x_mat));
     
     % set up a vector to keep execution times for every pulse
@@ -39,29 +35,22 @@ function img = backproject_data(data)
             fprintf('Pulse %d of %d\n',ii,data.Np);
         end 
         tic;
-        
-        % Form range profile with zero padding added
-        rc = fftshift(ifft(data.phdata(:,ii),data.Nfft));
-        % compute differential range for each pixel in the image (m)
+        % compute the differential range for every pixel in the image (m)
         dR = sqrt((data.AntX(ii) - data.x_mat).^2 + ...
-            (data.AntY(ii) - data.y_mat).^2 + ...
-            (data.AntZ(ii) - data.z_mat).^2) - data.RO(ii);
+             (data.AntY(ii) - data.y_mat).^2 + ...
+             (data.AntZ(ii) - data.z_mat).^2) - data.RO(ii);
+         
+        % calculate the frequency of each sample in the pulse (Hz)
+        freq = (data.minF(ii) + (0:(data.K-1))*data.deltaF)*1e9;
         
-        % Calculate the phase correction for image
-        phCorr = exp(1i*4*pi*data.minF(ii)*1e9/c*dR);
-        
-        % Determine which pixels fall within the range swath
-        I = find(and(dR > min(data.r_vec), dR < max(data.r_vec)));
-        
-        % Update the image using linear interpolation
-        data.im_final(I) = data.im_final(I) + interp1(data.r_vec,rc,dR(I),'linear') .* phCorr(I);
-        
-        % Determine the execution time for this pulse
+        % perform matched filter operation
+        for jj = 1:data.K 
+            data.im_final = data.im_final + data.phdata(jj,ii)*exp(1i*4*pi*freq(jj)/c*dR);
+        end
+        % determine the execution for this pulse
         t(ii) = toc;
-    end
-    
+    end 
     img = data.im_final;
-    
-   
-    
+       
+        
 end
